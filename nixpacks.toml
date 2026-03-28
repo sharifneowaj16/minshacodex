@@ -1,0 +1,12 @@
+[phases.setup]
+# Using Node.js 22 LTS to meet Prisma requirement (^20.19 || ^22.12 || >=24.0)
+nixPkgs = ["nodejs_22", "npm-10_x"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start"
