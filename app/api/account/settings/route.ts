@@ -6,8 +6,8 @@ import { getAuthenticatedUserIdFromRequest } from '@/lib/auth/appAuth';
 type SettingsMode = 'profile' | 'preferences';
 
 function mapUserResponse(user: {
-  firstName: string;
-  lastName: string;
+  firstName: string | null;
+  lastName: string | null;
   phone: string | null;
   dateOfBirth: Date | null;
   gender: string | null;
@@ -18,8 +18,8 @@ function mapUserResponse(user: {
   orderUpdates: boolean;
 }) {
   return {
-    firstName: user.firstName,
-    lastName: user.lastName,
+    firstName: user.firstName ?? '',
+    lastName: user.lastName ?? '',
     phone: user.phone,
     dateOfBirth: user.dateOfBirth?.toISOString() ?? null,
     gender: user.gender,

@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma';
+import type { Prisma } from '@/generated/prisma/client';
 import { AddressType, PaymentStatus } from '@/generated/prisma/client';
 
 interface PaymentCartItemInput {
@@ -238,7 +239,10 @@ export async function createPaymentRecord({
         status,
         amount,
         transactionId: transactionId || null,
-        gatewayResponse: gatewayResponse || undefined,
+        gatewayResponse:
+          gatewayResponse === undefined || gatewayResponse === null
+            ? undefined
+            : (gatewayResponse as Prisma.InputJsonValue),
       },
     });
 

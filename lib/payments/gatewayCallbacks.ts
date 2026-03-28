@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import type { Prisma } from '@/generated/prisma/client';
 import { PaymentStatus } from '@/generated/prisma/client';
 import prisma from '@/lib/prisma';
 import { failOrderAndRestoreStock } from '@/lib/payments/orderPersistence';
@@ -203,7 +204,7 @@ export async function completeGatewayPayment({
   const mergedGatewayResponse = {
     ...toRecord(context.payment?.gatewayResponse),
     ...(gatewayResponse || {}),
-  };
+  } as Prisma.InputJsonValue;
 
   await prisma.$transaction(async (tx) => {
     if (context.payment) {
@@ -258,33 +259,31 @@ export async function failGatewayPayment({
     return context.order;
   }
 
-  if (context.order.paymentStatus !== PaymentStatus.COMPLETED) {
-    const mergedGatewayResponse = {
-      ...toRecord(context.payment?.gatewayResponse),
-      ...(gatewayResponse || {}),
-    };
+  const mergedGatewayResponse = {
+    ...toRecord(context.payment?.gatewayResponse),
+    ...(gatewayResponse || {}),
+  } as Prisma.InputJsonValue;
 
-    if (context.payment) {
-      await prisma.payment.update({
-        where: { id: context.payment.id },
-        data: {
-          status: paymentStatus,
-          transactionId: transactionId ?? context.payment.transactionId,
-          gatewayResponse: mergedGatewayResponse,
-        },
-      });
-    } else {
-      await prisma.payment.create({
-        data: {
-          orderId: context.order.id,
-          method,
-          status: paymentStatus,
-          amount: context.order.total,
-          transactionId: transactionId || null,
-          gatewayResponse: mergedGatewayResponse,
-        },
-      });
-    }
+  if (context.payment) {
+    await prisma.payment.update({
+      where: { id: context.payment.id },
+      data: {
+        status: paymentStatus,
+        transactionId: transactionId ?? context.payment.transactionId,
+        gatewayResponse: mergedGatewayResponse,
+      },
+    });
+  } else {
+    await prisma.payment.create({
+      data: {
+        orderId: context.order.id,
+        method,
+        status: paymentStatus,
+        amount: context.order.total,
+        transactionId: transactionId || null,
+        gatewayResponse: mergedGatewayResponse,
+      },
+    });
   }
 
   await failOrderAndRestoreStock(context.order.id, paymentStatus);

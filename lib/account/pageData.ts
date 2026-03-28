@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma';
 import { LOYALTY_CONFIG } from '@/types/user';
+import type { User, UserAddress } from '@/types/user';
 
 function mapAddress(address: {
   id: string;
@@ -15,10 +16,10 @@ function mapAddress(address: {
   postalCode: string;
   country: string;
   phone: string | null;
-}) {
+}): UserAddress {
   return {
     id: address.id,
-    type: address.type.toLowerCase(),
+    type: address.type === 'SHIPPING' ? 'shipping' : 'billing',
     isDefault: address.isDefault,
     firstName: address.firstName,
     lastName: address.lastName,
@@ -31,6 +32,27 @@ function mapAddress(address: {
     country: address.country,
     phone: address.phone ?? '',
   };
+}
+
+function normalizeUserRole(role: string): User['role'] {
+  const normalizedRole = role.toLowerCase();
+
+  if (normalizedRole === 'customer') return 'customer';
+  if (normalizedRole === 'vip') return 'vip';
+  if (normalizedRole === 'premium') return 'premium';
+
+  return 'customer';
+}
+
+function normalizeUserStatus(status: string): User['status'] {
+  const normalizedStatus = status.toLowerCase();
+
+  if (normalizedStatus === 'active') return 'active';
+  if (normalizedStatus === 'inactive') return 'inactive';
+  if (normalizedStatus === 'suspended') return 'suspended';
+  if (normalizedStatus === 'banned') return 'banned';
+
+  return 'inactive';
 }
 
 function buildTrackingTimeline(order: {
@@ -104,7 +126,7 @@ function getReferralLink(referralCode: string | null) {
   return `${appUrl.replace(/\/$/, '')}/referral/${referralCode ?? ''}`;
 }
 
-export async function getSettingsPageUser(userId: string) {
+export async function getSettingsPageUser(userId: string): Promise<User | null> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
@@ -129,8 +151,8 @@ export async function getSettingsPageUser(userId: string) {
     avatar: user.avatar ?? undefined,
     emailVerified: !!user.emailVerified,
     phoneVerified: user.phoneVerified,
-    role: user.role.toLowerCase(),
-    status: user.status.toLowerCase(),
+    role: normalizeUserRole(user.role),
+    status: normalizeUserStatus(user.status),
     createdAt: user.createdAt,
     lastLoginAt: user.lastLoginAt ?? undefined,
     addresses: user.addresses.map(mapAddress),

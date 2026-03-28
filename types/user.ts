@@ -123,7 +123,7 @@ export interface User {
   emailVerified: boolean;
   phoneVerified: boolean;
   role: 'customer' | 'vip' | 'premium';
-  status: 'active' | 'inactive' | 'suspended';
+  status: 'active' | 'inactive' | 'suspended' | 'banned';
   createdAt: Date;
   lastLoginAt?: Date;
   preferences: {
